@@ -16,7 +16,7 @@ class Visitor {
 			ctx += method.body + "\n";
 			ctx += "}\n";
 		});
-    return ctx;
+		return ctx;
 	}
 }
 
@@ -41,4 +41,85 @@ const bookClassDecl: ClassDecl = {
 	],
 };
 
-log(new Visitor().visitClassDecl(bookClassDecl));
+// log(new Visitor().visitClassDecl(bookClassDecl));
+
+enum Type {
+	NUM = "NUMBER",
+	LPAR = "(",
+	RPAR = ")",
+	LBRACE = "{",
+	RBRACE = "}",
+	OP = "OPERATOR",
+	IDENT = "IDENTIFIER",
+	KWORD = "KEYWORD",
+	EOL = "EOL",
+	EOF = "EOF",
+}
+
+type Token = { type: Type; value: string | number };
+
+// Also known as tokenizer, lexer
+class Scanner {
+	tokenize(text: string) {
+		let current = "";
+		let tokens: Token[] = [];
+
+		for (let i = 0; i < text.length; i++) {
+			current += text[i];
+			current = current.trim();
+
+			const next = text[i + 1];
+
+			if (current === "") continue;
+
+			if ([Type.LBRACE, Type.RBRACE, Type.LPAR, Type.RPAR].includes(current as Type)) {
+				tokens.push({ type: current as Type, value: current });
+				current = "";
+				continue;
+			}
+
+			if (Number(current) && !Number(next)) {
+				tokens.push({ type: Type.NUM, value: Number(current) });
+				current = "";
+				continue;
+			}
+
+			const operators = "+-/*%>=!";
+			if (operators.includes(current) && !operators.includes(next)) {
+				tokens.push({ type: Type.OP, value: current });
+				current = "";
+				continue;
+			}
+
+			const isAlphanumeric = (value: string) => /\w/.exec(value);
+
+			if (isAlphanumeric(current) && !isAlphanumeric(next)) {
+				const keywords = "class function prototype static var typeof";
+				const isKeyword = keywords.includes(current);
+				tokens.push({ type: !isKeyword ? Type.IDENT : Type.KWORD, value: current });
+        current = "";
+				continue;
+			}
+
+			if ([";", "\n"].includes(current)) {
+				tokens.push({ type: Type.EOL, value: current });
+				current = "";
+				continue;
+			}
+		}
+
+		tokens.push({ type: Type.EOF, value: "" });
+
+		return tokens;
+	}
+}
+
+const code = `
+class Book {
+  addBook() { }
+  removeBook() { }
+  static getBook() { }
+}
+`;
+
+log(new Scanner().tokenize(code));
