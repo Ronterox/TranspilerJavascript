@@ -56,7 +56,7 @@ enum Type {
 	EOF = "EOF",
 }
 
-type Token = { type: Type; value: string | number };
+type Token = { type: Type; value?: string | number };
 
 // Also known as tokenizer, lexer
 class Scanner {
@@ -73,7 +73,7 @@ class Scanner {
 			if (current === "") continue;
 
 			if ([Type.LBRACE, Type.RBRACE, Type.LPAR, Type.RPAR].includes(current as Type)) {
-				tokens.push({ type: current as Type, value: current });
+				tokens.push({ type: current as Type });
 				current = "";
 				continue;
 			}
@@ -97,7 +97,7 @@ class Scanner {
 				const keywords = "class function prototype static var typeof";
 				const isKeyword = keywords.includes(current);
 				tokens.push({ type: !isKeyword ? Type.IDENT : Type.KWORD, value: current });
-        current = "";
+				current = "";
 				continue;
 			}
 
@@ -119,7 +119,6 @@ class Book {
   addBook() { }
   removeBook() { }
   static getBook() { }
-}
-`;
+}`;
 
 log(new Scanner().tokenize(code));
