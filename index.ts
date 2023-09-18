@@ -60,7 +60,7 @@ type Token = { type: Type; value?: string | number };
 
 // Also known as tokenizer, lexer
 class Scanner {
-	tokenize(text: string) {
+	tokenize(text: string): Token[] {
 		let current = "";
 		let tokens: Token[] = [];
 
@@ -96,7 +96,7 @@ class Scanner {
 			if (isAlphanumeric(current) && !isAlphanumeric(next)) {
 				const keywords = "class function prototype static var typeof";
 				const isKeyword = keywords.includes(current);
-				tokens.push({ type: !isKeyword ? Type.IDENT : Type.KWORD, value: current });
+				tokens.push({ type: isKeyword ? Type.KWORD : Type.IDENT, value: current });
 				current = "";
 				continue;
 			}
@@ -114,6 +114,59 @@ class Scanner {
 	}
 }
 
+class Parser {
+	parse(tokens: Token[]): ClassDecl[] {
+		const ast: ClassDecl[] = [];
+
+		for (let i = 0; i < tokens.length; i++) {
+			let currToken = tokens[i];
+
+			if (currToken.type === Type.KWORD && currToken.value === "class") {
+				const className = tokens[i + 1];
+				if (className.type === Type.IDENT) {
+					while (i < tokens.length && tokens[i].type !== Type.LBRACE) {
+						i++;
+					}
+					i++;
+					const methods: MethodDecl[] = [];
+					while (i < tokens.length && tokens[i].type !== Type.EOF) {
+						currToken = tokens[i];
+						let methodName = "";
+						let methodType: string | null = null;
+						let body = "";
+
+						if (currToken.type === Type.KWORD) {
+							methodType = currToken.value as string;
+							methodName = tokens[i + 1].value as string;
+							i += 2;
+						} else if (currToken.type === Type.IDENT) {
+							methodName = currToken.value as string;
+							i++;
+						}
+
+						while (i < tokens.length && tokens[i].type !== Type.LBRACE) {
+							i++;
+						}
+						i++;
+
+						while (i < tokens.length && tokens[i].type !== Type.RBRACE) {
+							body += tokens[i].value;
+							i++;
+						}
+
+						if (methodName) methods.push(new MethodDecl(methodName, methodType, body));
+						i++;
+					}
+					const classDecl = new ClassDecl(className.value + "", methods);
+					ast.push(classDecl);
+				}
+			}
+		}
+
+		return ast;
+	}
+}
+
 const code = `
 class Book {
   addBook() { }
@@ -121,4 +174,10 @@ class Book {
   static getBook() { }
 }`;
 
-log(new Scanner().tokenize(code));
+const tokens = new Scanner().tokenize(code);
+log("Tokens: ", tokens);
+
+const ast = new Parser().parse(tokens);
+log("AST: ", ast);
+
+log(new Visitor().visitClassDecl(ast[0]));
