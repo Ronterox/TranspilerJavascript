@@ -20,6 +20,7 @@ class Visitor {
 
 enum Type {
 	NUM = "NUMBER",
+	STR = "STRING",
 	LPAR = "(",
 	RPAR = ")",
 	LBRACE = "{",
@@ -40,6 +41,7 @@ enum Keyword {
 	VAR = "var",
 	TYPEOF = "typeof",
 	CONST = "const",
+	RETURN = "return",
 }
 
 type Token = { type: Type; value?: string | number };
@@ -49,6 +51,7 @@ class Scanner {
 	tokenize(text: string): Token[] {
 		let current = "";
 		let tokens: Token[] = [];
+		let isStringParsing = false;
 
 		function saveToken(type: Type, value?: string | number) {
 			tokens.push(value ? { type, value } : { type }); // To remove the value:undefined print
@@ -57,10 +60,16 @@ class Scanner {
 
 		for (let i = 0; i < text.length; i++) {
 			current += text[i];
-			current = current.trim();
-
 			const next = text[i + 1];
-			if (current === "") continue;
+
+			if (text[i] === '"') {
+				isStringParsing = !isStringParsing;
+				current = current.trim();
+				if (!isStringParsing) saveToken(Type.STR, current);
+				continue;
+			}
+
+			if (isStringParsing || (current = current.trim()) === "") continue;
 
 			if ([Type.LBRACE, Type.RBRACE, Type.LPAR, Type.RPAR].includes(current as Type)) {
 				saveToken(current as Type);
@@ -78,7 +87,7 @@ class Scanner {
 				continue;
 			}
 
-			const isText = (value: string) => /[\w"']/.exec(value);
+			const isText = (value: string) => /\w/.exec(value);
 
 			if (isText(current) && !isText(next)) {
 				const keywords = Object.values(Keyword) as string[];
@@ -100,8 +109,6 @@ class Scanner {
 enum Context {
 	CLASS = "class",
 	METHOD = "method",
-	// TODO: Use this context for spaces
-	STRING = "string",
 	NONE = "none",
 }
 
@@ -128,8 +135,10 @@ class Parser {
 		if (token.value === Context.CLASS && nextToken.type === Type.IDENT) {
 			ast.push(new ClassDecl(nextToken.value + "", (this.methods = [])));
 			this.openContext(Context.CLASS);
-		} else if (token.value === "static" && this.ctx === Context.CLASS && nextToken.type === Type.IDENT) {
-			this.openMethodContext(nextToken.value + "", "static");
+		} else if (token.value === Keyword.STATIC && this.ctx === Context.CLASS && nextToken.type === Type.IDENT) {
+			this.openMethodContext(nextToken.value + "", Keyword.STATIC);
+		} else if (this.ctx === Context.METHOD) {
+			this.appendToLastMethodBody(token.value + " " + nextToken.value);
 		}
 	}
 
@@ -173,12 +182,15 @@ class Book {
 		var syke = "There is no book";
 		return syke;
 	}
+
   removeBook() { }
+
   static getBook() { 
 		console.log("text"); 
 		println("This is Lol");
 	}
 }`;
+log("Code: ", code);
 
 const tokens = new Scanner().tokenize(code);
 log("Tokens: ", tokens);
