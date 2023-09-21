@@ -1,4 +1,4 @@
-import { Keyword, Token, Type } from "./types";
+import { Keyword, Token, Type } from "types";
 
 // Also known as tokenizer, lexer
 export class Scanner {

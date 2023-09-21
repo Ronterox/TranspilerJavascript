@@ -1,4 +1,4 @@
-import { ClassDecl } from "./types";
+import { ClassDecl } from "types";
 
 export class Visitor {
 	visitClassDecl(decl: ClassDecl) {

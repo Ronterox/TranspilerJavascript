@@ -1,9 +1,9 @@
 import { log } from "console";
-import { Parser } from "./parser";
-import { Scanner } from "./scanner";
-import { Visitor } from "./visitor";
+import { Parser } from "transpiler/parser";
+import { Scanner } from "transpiler/scanner";
+import { Visitor } from "transpiler/visitor";
 
-const filepath = Bun.argv[2] ?? "code.js";
+const filepath = Bun.argv[2] ?? "../example/code.js";
 const code = await Bun.file(filepath).text();
 
 const tokens = new Scanner().tokenize(code);

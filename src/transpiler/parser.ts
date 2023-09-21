@@ -1,4 +1,4 @@
-import { Token, MethodDecl, Context, Type, ClassDecl, Keyword } from "./types";
+import { Token, MethodDecl, Context, Type, ClassDecl, Keyword } from "types";
 
 export class Parser {
 	constructor(public tokens: Token[], public index = 0, public methods: MethodDecl[] = [], public ctx = Context.NONE) {}
